@@ -71,6 +71,21 @@ def visualize_employee_satisfaction(schedule_df):
     fig = px.bar(schedule_df, x='employee_name', y='satisfaction', color='satisfaction', title="Employee Satisfaction Levels")
     st.plotly_chart(fig)
 
+# Function to visualize sales per hour today
+def visualize_sales_per_hour(schedule_df):
+    # Ensure 'shift_start' is a datetime object
+    schedule_df['shift_start'] = pd.to_datetime(schedule_df['shift_start'])
+
+    # Group by shift start and calculate the average sales per hour
+    sales_trend = schedule_df.groupby('shift_start', as_index=False)['avg_sale_per_hour'].mean()
+
+    # Create a line chart for average sales per hour
+    fig = px.line(sales_trend, x='shift_start', y='avg_sale_per_hour', title="Sales per Hour Today", markers=True)
+    fig.update_layout(xaxis_title="Shift Start", yaxis_title="Average Sales per Hour")
+    st.plotly_chart(fig)
+    
+
+
 # Main Streamlit interface
 st.title("Restaurant HR Management Dashboard")
 
@@ -127,7 +142,7 @@ if st.selectbox("Login as", ["Admin"], key="login_type_admin") == "Admin":
             # Only display the required columns, excluding shift_start and shift_end
             st.dataframe(schedule_df[['employee_name', 'shift', 'salary', 'burnout', 'satisfaction']])
 
-            st.write(f"Vacant Slots: {result['vacant_slots']}")
+            st.write(f"You need to hire {result['vacant_slots']} more employees for today.")
             st.write(f"Total Employees Required for the Day: {result['total_required_employees']}")
 
             # Generate Gantt chart for shifts, excluding vacant slots
@@ -137,6 +152,9 @@ if st.selectbox("Login as", ["Admin"], key="login_type_admin") == "Admin":
             # Visualize employee satisfaction levels
             st.subheader("Employee Satisfaction Levels")
             visualize_employee_satisfaction(schedule_df)
+
+            st.subheader("Sales per Hour Today")
+            visualize_sales_per_hour(schedule_df)
 
             # Generate simplified MIS Report
             excel_data = convert_df_to_excel(schedule_df)
